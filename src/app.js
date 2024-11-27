@@ -13,8 +13,17 @@ import { fileURLToPath } from 'url'; // Importar fileURLToPath
 import path from 'path'; // Importar path
 import cors from 'cors'; // Importar cors
 
+import pg from 'pg';
+import { config } from 'dotenv';
+
+config()
+
 const app = express();
 app.use(express.json()); // Para que interprete los objetos json
+
+const pool = new pg.Pool({
+    connectionString: process.env.BD_DATABASE_URL
+})
 
 // Definir módulo de ES
 const __filename = fileURLToPath(import.meta.url);
