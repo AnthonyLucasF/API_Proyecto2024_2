@@ -1,79 +1,127 @@
-import { conmysql } from "../db.js"
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { conmysql } from "../db.js";
 
-export const getUsuarios =
+// SELECT: Obtener todos los registros
+export const getUsuario =
     async (req, res) => {
         try {
-            const [result] = await conmysql.query(' select * from usuarios')
-            res.json(result)
+            const [result] = await conmysql.query('SELECT * FROM usuario');
+            res.json(result);
         } catch (error) {
-            return res.status(500).json({ message: "Error al consultar usuarios" })
+            return res.status(500).json({ message: "Error al consultar Usuarios" });
         }
-    }
+    };
 
-export const getUsuariosxid = async (req, res) => {
-    try {
-        const [result] = await conmysql.query('SELECT * FROM usuarios WHERE usr_id=?', [req.params.id]);
-
-        if (result.length <= 0) {
-            return res.status(404).json({
-                usr_id: 0,
-                message: "Usuario no encontrado"
+// SELECT por ID
+export const getUsuarioxid =
+    async (req, res) => {
+        try {
+            const [result] = await conmysql.query('SELECT * FROM usuario WHERE usuario_id=?', [req.params.id]);
+            if (result.length <= 0) return res.status(404).json({ 
+                chofer_id: 0,
+                message: "Usuario no encontrado" 
             });
+            res.json(result[0]);
+        } catch (error) {
+            return res.status(500).json({ message: "Error del Servidor" });
         }
+    };
 
-        res.json(result[0]);
-    } catch (error) {
-        return res.status(500).json({ message: "Error del Servidor" });
-    }
-};
+// INSERT: Crear un nuevo registro
+export const postUsuario =
+    async (req, res) => {
+        try {
+            const { usuario_cedula, usuario_nombre, usuario_usuario, usuarioclave, usuario_estado, usuario_rol } = req.body;
+            //const imagen = req.file ? `/uploads/${req.file.filename}` : null;
 
-export const postUsuarios = async (req, res) => {
-    try {
-        const { usr_usuario, usr_clave, usr_nombre, usr_telefono, usr_correo, usr_activo } = req.body;
+            const [rows] = await conmysql.query(
+                `INSERT INTO usuario 
+                    (usuario_cedula, usuario_nombre, usuario_usuario, usuarioclave, usuario_estado, usuario_rol) 
+                VALUES (?, ?, ?, ?, ?, ?)`,
+                [usuario_cedula, usuario_nombre, usuario_usuario, usuarioclave, usuario_estado, usuario_rol]
+            );
 
-        // Encriptar la clave
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(usr_clave, saltRounds);
-
-        const [rows] = await conmysql.query('INSERT INTO usuarios (usr_usuario, usr_clave, usr_nombre, usr_telefono, usr_correo, usr_activo) VALUES(?,?,?,?,?,?)',
-            [usr_usuario, hashedPassword, usr_nombre, usr_telefono, usr_correo, usr_activo]);
-
-        res.send({
-            id: rows.insertId
-        });
-    } catch (error) {
-        return res.status(500).json({ message: "Error del Servidor" });
-    }
-};
-
-export const putUsuarios = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { usr_usuario, usr_clave, usr_nombre, usr_telefono, usr_correo, usr_activo } = req.body;
-
-        // Preparar los campos para la actualización
-        let updatedFields = [usr_usuario, usr_nombre, usr_telefono, usr_correo, usr_activo];
-        let query = 'UPDATE usuarios SET usr_usuario=?, usr_nombre=?, usr_telefono=?, usr_correo=?, usr_activo=?';
-
-        // Encriptar la nueva clave si se proporciona
-        if (usr_clave) {
-            const saltRounds = 10;
-            const hashedPassword = await bcrypt.hash(usr_clave, saltRounds);
-            updatedFields.push(hashedPassword);
-            query += ', usr_clave=?';
+            res.json({
+                id: rows.insertId,
+                message: "Usuario registrado con éxito"
+            });
+        } catch (error) {
+            return res.status(500).json({ message: error.message });
         }
+    };
 
-        query += ' WHERE usr_id=?';
-        updatedFields.push(id);
+// UPDATE: Actualizar un registro completo
+export const putUsuario =
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { usuario_cedula, usuario_nombre, usuario_usuario, usuarioclave, usuario_estado, usuario_rol } = req.body;
 
-        const [result] = await conmysql.query(query, updatedFields);
-        if (result.affectedRows <= 0) return res.status(404).json({ message: "Usuario no encontrado" });
+            const [result] = await conmysql.query(
+                `UPDATE chofer SET 
+                    usuario_cedula=?, usuario_nombre=?, usuario_usuario=?, usuarioclave=?, usuario_estado=?, usuario_rol=? 
+                WHERE usuario_id = ?`,
+                [usuario_cedula, usuario_nombre, usuario_usuario, usuarioclave, usuario_estado, usuario_rol, id]
+            );
 
-        const [rows] = await conmysql.query('SELECT * FROM usuarios WHERE usr_id=?', [id]);
-        res.json(rows[0]);
-    } catch (error) {
-        return res.status(500).json({ message: "Error del Servidor" });
-    }
-};
+            if (result.affectedRows <= 0) return res.status(404).json({ message: "Usuario no encontrado" });
+
+            const [rows] = await conmysql.query('SELECT * FROM usuario WHERE usuario_id=?', [id])
+            res.json(rows[0])
+
+            res.json({
+                success: true,
+                message: "Usuario registrado con éxito",
+                data: { id: rows.insertId }
+              });
+        } catch (error) {
+            return res.status(500).json({ message: error.message });
+        }
+    };
+
+// UPDATE parcial: Actualizar algunos campos
+export const pathUsuario =
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { usuario_cedula, usuario_nombre, usuario_usuario, usuarioclave, usuario_estado, usuario_rol } = req.body;
+
+            const [result] = await conmysql.query(
+                `UPDATE usuario SET 
+                    usuario_cedula = IFNULL(?, usuario_cedula), 
+                    usuario_nombre = IFNULL(?, usuario_nombre), 
+                    usuario_usuario = IFNULL(?, usuario_usuario), 
+                    usuarioclave = IFNULL(?, usuarioclave), 
+                    usuario_estado = IFNULL(?, usuario_estado), 
+                    usuario_rol = IFNULL(?, usuario_rol)
+                WHERE usuario_id=?`,
+                [usuario_cedula, usuario_nombre, usuario_usuario, usuarioclave, usuario_estado, usuario_rol, id]
+            );
+
+            if (result.affectedRows <= 0) return res.status(404).json({ message: "Usuario no encontrado" });
+
+            const [rows] = await conmysql.query('SELECT * FROM usuario WHERE usuario_id=?', [id])
+            res.json(rows[0])
+
+            res.json({ message: "Usuario actualizado parcialmente" });
+        } catch (error) {
+            return res.status(500).json({ message: error.message });
+        }
+    };
+
+// DELETE: Eliminar un registro
+export const deleteUsuario =
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const [rows] = await conmysql.query('DELETE FROM usuario WHERE usuario_id=?', [id]);
+
+            if (rows.affectedRows <= 0) return res.status(404).json({ 
+                id: 0,
+                message: "Usuario no encontrado" 
+            });
+
+            res.status(202).json({ message: "Usuario eliminado con éxito" });
+        } catch (error) {
+            return res.status(500).json({ message: error.message });
+        }
+    };

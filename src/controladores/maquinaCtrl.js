@@ -111,7 +111,7 @@ export const deleteMaquina =
                 });
             }
 
-            res.sendStatus(202); // Código HTTP 202 (Accepted)
+            res.status(202).json({ message: "Máquina eliminada con éxito" });
         } catch (error) {
             return res.status(500).json({ message: error.message });
         }

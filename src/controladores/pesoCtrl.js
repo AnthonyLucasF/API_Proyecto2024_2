@@ -15,10 +15,10 @@ export const getPeso =
 export const getPesoxid =
     async (req, res) => {
         try {
-            const [result] = await conmysql.query('SELECT * FROM peso WHERE id_peso = ?', [req.params.id]);
+            const [result] = await conmysql.query('SELECT * FROM peso WHERE peso_id = ?', [req.params.id]);
             if (result.length <= 0) {
                 return res.status(404).json({
-                    id_peso: 0,
+                    peso_id: 0,
                     message: "Peso no encontrado"
                 });
             }
@@ -32,11 +32,11 @@ export const getPesoxid =
 export const postPeso =
     async (req, res) => {
         try {
-            const { descripcion_peso, estado } = req.body;
+            const { peso_descripcion, peso_cantidad } = req.body;
 
             const [rows] = await conmysql.query(
-                'INSERT INTO peso (descripcion_peso, estado) VALUES (?, ?)',
-                [descripcion_peso, estado]
+                'INSERT INTO peso (peso_descripcion, peso_cantidad) VALUES (?, ?)',
+                [peso_descripcion, peso_cantidad]
             );
 
             res.json({
@@ -53,18 +53,18 @@ export const putPeso =
     async (req, res) => {
         try {
             const { id } = req.params;
-            const { descripcion_peso, estado } = req.body;
+            const { peso_descripcion, peso_cantidad } = req.body;
 
             const [result] = await conmysql.query(
-                'UPDATE peso SET descripcion_peso = ?, estado = ? WHERE id_peso = ?',
-                [descripcion_peso, estado, id]
+                'UPDATE peso SET peso_descripcion = ?, peso_cantidad = ? WHERE peso_id = ?',
+                [peso_descripcion, peso_cantidad, id]
             );
 
             if (result.affectedRows <= 0) {
                 return res.status(404).json({ message: "Peso no encontrado" });
             }
 
-            const [rows] = await conmysql.query('SELECT * FROM peso WHERE id_peso = ?', [id]);
+            const [rows] = await conmysql.query('SELECT * FROM peso WHERE peso_id = ?', [id]);
             res.json(rows[0]);
         } catch (error) {
             return res.status(500).json({ message: error.message });
@@ -76,21 +76,21 @@ export const pathPeso =
     async (req, res) => {
         try {
             const { id } = req.params;
-            const { descripcion_peso, estado } = req.body;
+            const { peso_descripcion, peso_cantidad } = req.body;
 
             const [result] = await conmysql.query(
                 `UPDATE peso 
-             SET descripcion_peso = IFNULL(?, descripcion_peso), 
-                 estado = IFNULL(?, estado) 
-             WHERE id_peso = ?`,
-                [descripcion_peso, estado, id]
+             SET peso_descripcion = IFNULL(?, peso_descripcion), 
+                 peso_cantidad = IFNULL(?, peso_cantidad) 
+             WHERE peso_id = ?`,
+                [peso_descripcion, peso_cantidad, id]
             );
 
             if (result.affectedRows <= 0) {
                 return res.status(404).json({ message: "Peso no encontrado" });
             }
 
-            const [rows] = await conmysql.query('SELECT * FROM peso WHERE id_peso = ?', [id]);
+            const [rows] = await conmysql.query('SELECT * FROM peso WHERE peso_id = ?', [id]);
             res.json(rows[0]);
         } catch (error) {
             return res.status(500).json({ message: error.message });
@@ -102,7 +102,7 @@ export const deletePeso =
     async (req, res) => {
         try {
             const { id } = req.params;
-            const [rows] = await conmysql.query('DELETE FROM peso WHERE id_peso = ?', [id]);
+            const [rows] = await conmysql.query('DELETE FROM peso WHERE peso_id = ?', [id]);
 
             if (rows.affectedRows <= 0) {
                 return res.status(404).json({
@@ -111,7 +111,7 @@ export const deletePeso =
                 });
             }
 
-            res.sendStatus(202); // Código HTTP 202 (Accepted)
+            res.status(202).json({ message: "Peso eliminado con éxito" });
         } catch (error) {
             return res.status(500).json({ message: error.message });
         }

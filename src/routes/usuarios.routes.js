@@ -1,17 +1,14 @@
-import express from 'express';
-import { getUsuarios, getUsuariosxid, postUsuarios, putUsuarios } from '../controladores/usuariosCtrl.js';
-import { loginUsuarios } from '../controladores/loginUsuarios.js'; // Asegúrate de tener esta importación
-import { verifyToken } from '../controladores/authMiddleware.js';
+import { Router } from "express";
+import { getUsuario, getUsuarioxid, postUsuario, putUsuario, pathUsuario, deleteUsuario } from '../controladores/usuariosCtrl.js'
 
-const router = express.Router();
+const router = Router()
 
-// Ruta de login
-router.post('/login', loginUsuarios); // Ruta de login
+//Armar nuestras rutas
+router.get('/usuario', getUsuario) //SELECT
+router.get('/usuario/:id', getUsuarioxid) //SELECT x ID
+router.post('/usuario', postUsuario) //INSERT
+router.put('/usuario/:id', putUsuario) //UPDATE
+router.patch('/usuario/:id', pathUsuario) //UPDATE
+router.delete('/usuario/:id', deleteUsuario) //DELETE
 
-// Rutas protegidas
-router.get('/usuarios', verifyToken, getUsuarios); //SELECT
-router.get('/usuarios/:id', verifyToken, getUsuariosxid); //SELECT x ID
-router.post('/usuarios', postUsuarios); //INSERT
-router.put('/usuarios/:id', verifyToken, putUsuarios); //UPDATE
-
-export default router;
+export default router
